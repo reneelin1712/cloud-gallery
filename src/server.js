@@ -31,7 +31,7 @@ app.post("/signup", async (req, res) => {
             password: password
         }
 
-        const client = await MongoClient.connect('mongodb://localhost:27017', { useNewUrlParser: true });
+        const client = await MongoClient.connect('mongodb://104.197.112.244:27017', { useNewUrlParser: true });
         const db = client.db('cloud-gallery');
         const users = await db.collection('users').insert(newUser);
         res.status(200).send({ userName: `${username}` })
@@ -45,7 +45,7 @@ app.post("/signup", async (req, res) => {
 
 app.post("/login", async (req, res) => {
     console.log(req.body);
-    const client = await MongoClient.connect('mongodb://localhost:27017', { useNewUrlParser: true });
+    const client = await MongoClient.connect('mongodb://104.197.112.244:27017', { useNewUrlParser: true });
     const db = client.db('cloud-gallery');
     db.collection('users').findOne({ email: req.body.email }, function (err, user) {
         // In case the user not found   
@@ -73,7 +73,7 @@ app.post("/login", async (req, res) => {
 
 app.get("/paintings", async (req, res) => {
 
-    const client = await MongoClient.connect('mongodb://localhost:27017', { useNewUrlParser: true });
+    const client = await MongoClient.connect('mongodb://104.197.112.244:27017', { useNewUrlParser: true });
     const db = client.db('cloud-gallery');
     const paintings = await db.collection('paintings').find({}).toArray(function (err, result) {
         if (err) throw err;
@@ -95,7 +95,7 @@ app.post("/paintings/like", async (req, res) => {
             paintingname:paintingname
         }
 
-        const client = await MongoClient.connect('mongodb://localhost:27017', { useNewUrlParser: true,useUnifiedTopology: true  });
+        const client = await MongoClient.connect('mongodb://104.197.112.244:27017', { useNewUrlParser: true,useUnifiedTopology: true  });
         const db = client.db('cloud-gallery');
         const users = await db.collection('users').updateOne(
            {email:email},
@@ -122,7 +122,7 @@ app.post("/paintings/unlike", async (req, res) => {
         const { email, paintingID, paintingname} = req.body;
         console.log(req.body)
 
-        const client = await MongoClient.connect('mongodb://localhost:27017', { useNewUrlParser: true,useUnifiedTopology: true  });
+        const client = await MongoClient.connect('mongodb://104.197.112.244:27017', { useNewUrlParser: true,useUnifiedTopology: true  });
         const db = client.db('cloud-gallery');
         const like = await db.collection('users').find({email:email}).project({like:1, _id: 0}).toArray( function (err, result) {
             
@@ -148,7 +148,7 @@ app.post("/paintings/unlike", async (req, res) => {
 app.get("/paintings/detail/:name", async (req, res) => {
     const name = req.params.name;
     console.log(name);
-    const client = await MongoClient.connect('mongodb://localhost:27017', { useNewUrlParser: true });
+    const client = await MongoClient.connect('mongodb://104.197.112.244:27017', { useNewUrlParser: true });
     const db = client.db('cloud-gallery');
     const paintings = await db.collection('paintings').find({ name: name }).toArray(function (err, result) {
         if (err) throw err;
@@ -183,7 +183,7 @@ app.post("/paintings/add", (req, res) => {
                 imageUrl: results[0].url
             }
             try {
-                const client = await MongoClient.connect('mongodb://localhost:27017', { useNewUrlParser: true, useUnifiedTopology: true });
+                const client = await MongoClient.connect('mongodb://104.197.112.244:27017', { useNewUrlParser: true, useUnifiedTopology: true });
                 const db = client.db('cloud-gallery');
                 const users = await db.collection('paintings').insertOne(newPainting);
                 res.status(200).send({ message: "add success" })
