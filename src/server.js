@@ -45,9 +45,9 @@ app.post("/signup", async (req, res) => {
 
 app.post("/login", async (req, res) => {
     console.log(req.body);
-    const client = await MongoClient.connect('mongodb://104.197.112.244:27017', { useNewUrlParser: true });
+    const client = await MongoClient.connect('mongodb://104.197.112.244:27017', { useNewUrlParser: true ,useUnifiedTopology: true });
     const db = client.db('cloud-gallery');
-    db.collection('users').findOne({ email: req.body.email }, function (err, user) {
+    db.collection('users').findOne({ email: req.body.email }, async function (err, user) {
         // In case the user not found   
         if (err) {
             console.log('THIS IS ERROR RESPONSE')
@@ -56,12 +56,26 @@ app.post("/login", async (req, res) => {
         if (user && user.password === req.body.password) {
             console.log('User and password is correct')
             console.log(user.like)
-            res.status(200).send({
-                message: "User and password is correct",
-                userName: `${user.username}`,
-                email:  `${user.email}`,
-                like: user.like
+
+            const client = await MongoClient.connect('mongodb://104.197.112.244:27017', { useNewUrlParser: true,useUnifiedTopology: true });
+            const db = client.db('cloud-gallery');
+            db.collection('rating').find({userID:1}).toArray(function (err, result) {
+                if (err) throw err;
+                console.log(result);
+                const rating=result
+
+                res.status(200).send({
+                    message: "User and password is correct",
+                    userName: `${user.username}`,
+                    email:  `${user.email}`,
+                    like: user.like,
+                    rating: rating,
+                    userID:`${user.userID}`
+                    
+                })
             })
+            
+       
         } else {
             console.log("Credentials wrong");
             res.json({ message: "Login invalid" });
@@ -84,6 +98,77 @@ app.get("/paintings", async (req, res) => {
 
     });;
 })
+
+app.get("/paintings/popular", async (req,res)=>{
+    const client = await MongoClient.connect('mongodb://104.197.112.244:27017', { useNewUrlParser: true });
+    const db = client.db('cloud-gallery');
+    const paintings = await db.collection('paintings').find({popular:true}).toArray(function (err, result) {
+        if (err) throw err;
+        console.log(result);
+
+        res.status(200).send(result)
+        client.close();
+
+    });;
+})
+
+app.get("/recommendation/:userID", async (req, res) => {
+    const userID = parseInt(req.params.userID);
+    console.log(userID);
+    const client = await MongoClient.connect('mongodb://104.197.112.244:27017', { useNewUrlParser: true });
+    const db = client.db('cloud-gallery');
+    const recommendation = await db.collection('recommendation').aggregate(
+        [
+            {
+                "$match": { "userID": userID }
+            },
+            {
+            $lookup:
+            {
+                from:"paintings",
+                localField: "pID",
+                foreignField:"pID",
+                as: "recommendation"
+            }
+        },
+            {$project:
+                {"recommendation":1}
+            }
+        ])
+                .toArray(function (err, result) {
+        if (err) throw err;
+        console.log(result);
+
+        res.status(200).send(result)
+        client.close();
+
+    });;
+})
+
+app.post("/paintings/rating", async (req, res) => {
+    console.log(req.body);
+    try {
+        const { userID, pID, rating } = req.body;
+        console.log(req.body)
+        const newRating = {
+            userID: userID,
+            pID: pID,
+            rating: rating
+        }
+       
+        const client = await MongoClient.connect('mongodb://104.197.112.244:27017', { useNewUrlParser: true });
+        const db = client.db('cloud-gallery');
+        const users = await db.collection('rating').insert(newRating);
+        res.status(200).send({ message: "rating inserted" })
+        client.close();
+    
+
+    } catch (error) {
+        res.status(500).json({ message: "error connecting", error })
+    }
+
+})
+
 
 app.post("/paintings/like", async (req, res) => {
    
@@ -118,7 +203,7 @@ app.post("/paintings/like", async (req, res) => {
 
 app.post("/paintings/unlike", async (req, res) => {
    
-    // try{
+   
         const { email, paintingID, paintingname} = req.body;
         console.log(req.body)
 
@@ -139,10 +224,6 @@ app.post("/paintings/unlike", async (req, res) => {
         })
       
 
-    // } catch (error) {
-    //     console.log(error)
-    //     res.status(500).json({ message: "error connecting", error })
-    // }
 })
 
 app.get("/paintings/detail/:name", async (req, res) => {
