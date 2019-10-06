@@ -277,6 +277,20 @@ app.post("/paintings/add", (req, res) => {
 })
 
 
+app.get("/paintings/mongoreplica", async (req, res) => {
+
+    const client = await MongoClient.connect('mongodb://root:aJBtx9JyQnud@34.68.100.248:27017', { useNewUrlParser: true ,useUnifiedTopology: true});
+    const db = client.db('cloud-gallery');
+    const paintings = await db.collection('users').find({}).toArray(function (err, result) {
+        if (err) throw err;
+        console.log(result);
+
+        res.status(200).send(result)
+        client.close();
+
+    });;
+})
+
 app.get('*', (req, res) => {
     res.sendFile(path.join(__dirname + '/build/index.html'));
 })
